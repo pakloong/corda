@@ -186,6 +186,13 @@ interface SerializationContext {
 }
 
 /**
+ *
+ */
+enum class ContextPropertyKeys {
+    SERIALIZERS
+}
+
+/**
  * Global singletons to be used as defaults that are injected elsewhere (generally, in the node or in RPC client).
  */
 object SerializationDefaults {

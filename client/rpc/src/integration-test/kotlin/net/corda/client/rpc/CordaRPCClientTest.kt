@@ -18,6 +18,7 @@ import net.corda.finance.schemas.CashSchemaV1
 import net.corda.node.internal.Node
 import net.corda.node.internal.StartedNode
 import net.corda.node.services.Permissions.Companion.all
+import net.corda.nodeapi.exceptions.InternalNodeException
 import net.corda.testing.core.*
 import net.corda.testing.node.User
 import net.corda.testing.node.internal.NodeBasedTest

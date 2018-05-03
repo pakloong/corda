@@ -5,6 +5,7 @@ package net.corda.nodeapi.internal.serialization.amqp
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner
 import net.corda.core.cordapp.Cordapp
 import net.corda.core.internal.objectOrNewInstance
+import net.corda.core.internal.uncheckedCast
 import net.corda.core.serialization.*
 import net.corda.core.utilities.ByteSequence
 import net.corda.nodeapi.internal.serialization.CordaSerializationMagic
@@ -117,13 +118,19 @@ abstract class AbstractAMQPSerializationScheme(
             }
         }
 
+        context.properties[ContextPropertyKeys.SERIALIZERS]?.apply {
+            uncheckedCast<Any, List<CustomSerializer<out Any>>>(this).map {
+                factory.register(it)
+            }
+        }
     }
 
     private val serializerFactoriesForContexts = ConcurrentHashMap<Pair<ClassWhitelist, ClassLoader>, SerializerFactory>()
 
     protected abstract fun rpcClientSerializerFactory(context: SerializationContext): SerializerFactory
     protected abstract fun rpcServerSerializerFactory(context: SerializationContext): SerializerFactory
-    protected open val publicKeySerializer: CustomSerializer.Implements<PublicKey> = net.corda.nodeapi.internal.serialization.amqp.custom.PublicKeySerializer
+    protected open val publicKeySerializer: CustomSerializer.Implements<PublicKey>
+            = net.corda.nodeapi.internal.serialization.amqp.custom.PublicKeySerializer
 
     private fun getSerializerFactory(context: SerializationContext): SerializerFactory {
         return serializerFactoriesForContexts.computeIfAbsent(Pair(context.whitelist, context.deserializationClassLoader)) {
@@ -153,45 +160,5 @@ abstract class AbstractAMQPSerializationScheme(
     }
 
     protected fun canDeserializeVersion(magic: CordaSerializationMagic) = magic == amqpMagic
-}
-
-// TODO: This will eventually cover server RPC as well and move to node module, but for now this is not implemented
-class AMQPServerSerializationScheme(cordappCustomSerializers: Set<SerializationCustomSerializer<*, *>> = emptySet())
-    : AbstractAMQPSerializationScheme(cordappCustomSerializers) {
-    constructor(cordapps: List<Cordapp>) : this(cordapps.customSerializers)
-
-    override fun rpcClientSerializerFactory(context: SerializationContext): SerializerFactory {
-        throw UnsupportedOperationException()
-    }
-
-    override fun rpcServerSerializerFactory(context: SerializationContext): SerializerFactory {
-        throw UnsupportedOperationException()
-    }
-
-    override fun canDeserializeVersion(magic: CordaSerializationMagic, target: SerializationContext.UseCase): Boolean {
-        return canDeserializeVersion(magic) &&
-                (target == SerializationContext.UseCase.P2P || target == SerializationContext.UseCase.Storage)
-    }
-
-}
-
-// TODO: This will eventually cover client RPC as well and move to client module, but for now this is not implemented
-class AMQPClientSerializationScheme(cordappCustomSerializers: Set<SerializationCustomSerializer<*,*>> = emptySet())
-    : AbstractAMQPSerializationScheme(cordappCustomSerializers) {
-    constructor(cordapps: List<Cordapp>) : this(cordapps.customSerializers)
-
-    override fun rpcClientSerializerFactory(context: SerializationContext): SerializerFactory {
-        throw UnsupportedOperationException()
-    }
-
-    override fun rpcServerSerializerFactory(context: SerializationContext): SerializerFactory {
-        throw UnsupportedOperationException()
-    }
-
-    override fun canDeserializeVersion(magic: CordaSerializationMagic, target: SerializationContext.UseCase): Boolean {
-        return canDeserializeVersion(magic) &&
-                (target == SerializationContext.UseCase.P2P || target == SerializationContext.UseCase.Storage)
-    }
-
 }
 
