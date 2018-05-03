@@ -58,7 +58,7 @@ class RpcServerObservableSerializerTests {
                 deduplicationIdentity = "thisIsATest",
                 clientAddress = SimpleString ("clientAddress"))
 
-        val newContext = RpcServerObservableSerializer.createContext(observable, serializationContext)
+        val newContext = RpcServerObservableSerializer.createContext(serializationContext, observable)
 
         assertEquals(1, newContext.properties.size)
         assertTrue(newContext.properties.containsKey(RpcServerObservableSerializer.RpcObservableContextKey))
@@ -82,7 +82,7 @@ class RpcServerObservableSerializerTests {
         }
 
         val obs = Observable.create<Int>( { 12 })
-        val newContext = RpcServerObservableSerializer.createContext(observable, serializationContext)
+        val newContext = RpcServerObservableSerializer.createContext(serializationContext, observable)
 
         try {
             SerializationOutput(sf).serializeAndReturnSchema(obs, newContext)

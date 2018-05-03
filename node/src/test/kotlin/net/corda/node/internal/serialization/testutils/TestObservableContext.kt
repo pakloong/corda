@@ -14,7 +14,6 @@ class TestObservableContext(
         override val clientAddress: SimpleString
 ) : ObservableContextInterface {
     override fun sendMessage(serverToClient: RPCApi.ServerToClient) {
-        println ("\n\nHALP\n\n")
-    }
 
+    }
 }

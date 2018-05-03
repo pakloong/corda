@@ -93,12 +93,10 @@ class RoundTripObservableSerializerTests {
         val obs = Observable.create<Int>({ 12 })
 
         val serverSerializationContext = RpcServerObservableSerializer.createContext(
-                serverObservableContext,
-                serializationContext)
+                serializationContext, serverObservableContext)
 
         val clientSerializationContext = RpcClientObservableSerializer.createContext(
-                clientObservableContext,
-                serializationContext).withProperty(RPCApi.RpcRequestOrObservableIdKey, id)
+                serializationContext, clientObservableContext).withProperty(RPCApi.RpcRequestOrObservableIdKey, id)
 
 
         val blob = SerializationOutput(serverSerializer).serialize(obs, serverSerializationContext)

@@ -24,8 +24,8 @@ class RpcServerObservableSerializer : CustomSerializer.Implements<Observable<*>>
 
     companion object {
         fun createContext(
-                observableContext: ObservableContextInterface,
-                serializationContext: SerializationContext
+                serializationContext: SerializationContext,
+                observableContext: ObservableContextInterface
         ) = serializationContext.withProperty(
                     RpcServerObservableSerializer.RpcObservableContextKey, observableContext)
     }
