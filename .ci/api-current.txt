@@ -55,7 +55,7 @@ public final class net.corda.core.concurrent.ConcurrencyUtils extends java.lang.
   public static final Object match(concurrent.Future, kotlin.jvm.functions.Function1, kotlin.jvm.functions.Function1)
   @org.jetbrains.annotations.NotNull public static final String shortCircuitedTaskFailedMessage = "Short-circuited task failed:"
 ##
-public interface net.corda.core.concurrent.CordaFuture extends java.util.concurrent.Future
+@net.corda.core.serialization.CordaSerializable public interface net.corda.core.concurrent.CordaFuture extends java.util.concurrent.Future
   public abstract void then(kotlin.jvm.functions.Function1)
   @org.jetbrains.annotations.NotNull public abstract concurrent.CompletableFuture toCompletableFuture()
 ##
@@ -1710,7 +1710,7 @@ public final class net.corda.core.messaging.CordaRPCOpsKt extends java.lang.Obje
   public int hashCode()
   public String toString()
 ##
-@net.corda.core.DoNotImplement public interface net.corda.core.messaging.FlowHandle extends java.lang.AutoCloseable
+@net.corda.core.DoNotImplement @net.corda.core.serialization.CordaSerializable public interface net.corda.core.messaging.FlowHandle extends java.lang.AutoCloseable
   public abstract void close()
   @org.jetbrains.annotations.NotNull public abstract net.corda.core.flows.StateMachineRunId getId()
   @org.jetbrains.annotations.NotNull public abstract net.corda.core.concurrent.CordaFuture getReturnValue()
@@ -1727,7 +1727,7 @@ public final class net.corda.core.messaging.CordaRPCOpsKt extends java.lang.Obje
   public int hashCode()
   public String toString()
 ##
-@net.corda.core.DoNotImplement public interface net.corda.core.messaging.FlowProgressHandle extends net.corda.core.messaging.FlowHandle
+@net.corda.core.DoNotImplement @net.corda.core.serialization.CordaSerializable public interface net.corda.core.messaging.FlowProgressHandle extends net.corda.core.messaging.FlowHandle
   public abstract void close()
   @org.jetbrains.annotations.NotNull public abstract rx.Observable getProgress()
   @org.jetbrains.annotations.Nullable public abstract net.corda.core.messaging.DataFeed getStepsTreeFeed()
