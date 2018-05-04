@@ -4,7 +4,7 @@ import net.corda.nodeapi.internal.serialization.amqp.CustomSerializer
 import net.corda.nodeapi.internal.serialization.amqp.SerializerFactory
 import rx.Notification
 
-class RXNotificationSerializer (
+class RXNotificationSerializer(
         factory: SerializerFactory
 ) : CustomSerializer.Proxy<rx.Notification<*>, RXNotificationSerializer.Proxy>(
         Notification::class.java,
@@ -12,14 +12,14 @@ class RXNotificationSerializer (
         factory
 ) {
     data class Proxy(
-            val kind : Notification.Kind,
+            val kind: Notification.Kind,
             val t: Throwable?,
             val value: Any?)
 
-    override fun toProxy(obj: Notification<*>) =Proxy(obj.kind, obj.throwable, obj.value)
+    override fun toProxy(obj: Notification<*>) = Proxy(obj.kind, obj.throwable, obj.value)
 
     override fun fromProxy(proxy: Proxy): Notification<*> {
-        return when(proxy.kind) {
+        return when (proxy.kind) {
             Notification.Kind.OnCompleted -> Notification.createOnCompleted<Any>()
             Notification.Kind.OnError -> Notification.createOnError<Any>(proxy.t)
             Notification.Kind.OnNext -> Notification.createOnNext(proxy.value)

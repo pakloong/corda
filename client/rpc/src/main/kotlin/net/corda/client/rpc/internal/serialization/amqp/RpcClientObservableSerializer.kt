@@ -41,17 +41,21 @@ object RpcClientObservableSerializer : CustomSerializer.Implements<Observable<*>
         }
     }
 
-    override val schemaForDocumentation: Schema
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+
+    override val schemaForDocumentation = Schema(
+            listOf(
+                    RestrictedType(
+                            type.toString(),
+                            "",
+                            listOf(type.toString()),
+                            SerializerFactory.primitiveTypeName(ByteArray::class.java)!!,
+                            descriptor,
+                            emptyList())))
 
     override fun readObject(obj: Any, schemas: SerializationSchemas, input: DeserializationInput,
                             context: SerializationContext
     ): Observable<*> {
         if (RpcObservableContextKey !in context.properties) {
-            context.properties.forEach {
-                println("${it.key} - ${it.value}")
-                println(it.key == RpcObservableContextKey)
-            }
             throw NotSerializableException("Missing Observable Context Key on Client Context")
         }
 

@@ -27,7 +27,7 @@ class RpcServerObservableSerializer : CustomSerializer.Implements<Observable<*>>
                 serializationContext: SerializationContext,
                 observableContext: ObservableContextInterface
         ) = serializationContext.withProperty(
-                    RpcServerObservableSerializer.RpcObservableContextKey, observableContext)
+                RpcServerObservableSerializer.RpcObservableContextKey, observableContext)
     }
 
     override val schemaForDocumentation: Schema
@@ -37,7 +37,7 @@ class RpcServerObservableSerializer : CustomSerializer.Implements<Observable<*>>
             obj: Any, schemas: SerializationSchemas,
             input: DeserializationInput,
             context: SerializationContext
-    ) : Observable<*> {
+    ): Observable<*> {
         throw UnsupportedOperationException()
     }
 
@@ -50,7 +50,7 @@ class RpcServerObservableSerializer : CustomSerializer.Implements<Observable<*>>
     ) {
         val observableId = Trace.InvocationId.newInstance()
         if (RpcServerObservableSerializer.RpcObservableContextKey !in context.properties) {
-            throw NotSerializableException ("Missing Observable Key on serialization context - $type")
+            throw NotSerializableException("Missing Observable Key on serialization context - $type")
         }
 
         val observableContext = context.properties[RpcServerObservableSerializer.RpcObservableContextKey]
@@ -62,8 +62,6 @@ class RpcServerObservableSerializer : CustomSerializer.Implements<Observable<*>>
         }
 
         val observableWithSubscription = ObservableSubscription(
-                // We capture [observableContext] in the subscriber. Note that all synchronisation/kryo borrowing
-                // must be done again within the subscriber
                 subscription = obj.materialize().subscribe(
                         object : Subscriber<Notification<*>>() {
                             override fun onNext(observation: Notification<*>) {

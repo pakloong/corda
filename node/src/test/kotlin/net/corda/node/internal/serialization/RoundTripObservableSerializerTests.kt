@@ -53,7 +53,7 @@ class RoundTripObservableSerializerTests {
     private fun createRpcObservableMap(): RpcObservableMap {
         val onObservableRemove = RemovalListener<Trace.InvocationId, UnicastSubject<Notification<*>>> { key, value, cause ->
             val observableId = key!!
-//            val rpcCallSite = /* callSiteMap?.remove(observableId) */null
+
             if (cause == RemovalCause.COLLECTED) {
 
             }
