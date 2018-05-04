@@ -2,10 +2,8 @@ package net.corda.client.rpc.internal.serialization.amqp
 
 
 import net.corda.client.rpc.internal.ObservableContext
-
 import net.corda.core.context.Trace
 import net.corda.core.serialization.SerializationContext
-import net.corda.core.serialization.SerializationDefaults
 import net.corda.nodeapi.RPCApi
 import net.corda.nodeapi.internal.serialization.amqp.*
 import org.apache.qpid.proton.codec.Data
@@ -18,7 +16,7 @@ import java.time.Instant
 import java.util.concurrent.atomic.AtomicInteger
 import javax.transaction.NotSupportedException
 
-object  RpcClientObservableSerializer : CustomSerializer.Implements<Observable<*>>(Observable::class.java){
+object RpcClientObservableSerializer : CustomSerializer.Implements<Observable<*>>(Observable::class.java) {
     private object RpcObservableContextKey
 
     fun createContext(
@@ -48,22 +46,22 @@ object  RpcClientObservableSerializer : CustomSerializer.Implements<Observable<*
 
     override fun readObject(obj: Any, schemas: SerializationSchemas, input: DeserializationInput,
                             context: SerializationContext
-    ) : Observable<*> {
+    ): Observable<*> {
         if (RpcObservableContextKey !in context.properties) {
             context.properties.forEach {
-                println ("${it.key} - ${it.value}")
-                println (it.key == RpcObservableContextKey)
+                println("${it.key} - ${it.value}")
+                println(it.key == RpcObservableContextKey)
             }
-            throw NotSerializableException ("Missing Observable Context Key on Client Context")
+            throw NotSerializableException("Missing Observable Context Key on Client Context")
         }
 
         val observableContext =
                 context.properties[RpcClientObservableSerializer.RpcObservableContextKey] as ObservableContext
 
-        if (obj !is List<*>) throw NotSerializableException ("Input must be a serialised list")
-        if (obj.size != 2) throw NotSerializableException ("Expecting two elements, have ${obj.size}")
+        if (obj !is List<*>) throw NotSerializableException("Input must be a serialised list")
+        if (obj.size != 2) throw NotSerializableException("Expecting two elements, have ${obj.size}")
 
-        val observableId : Trace.InvocationId = Trace.InvocationId((obj[0] as String), Instant.ofEpochMilli((obj[1] as Long)))
+        val observableId: Trace.InvocationId = Trace.InvocationId((obj[0] as String), Instant.ofEpochMilli((obj[1] as Long)))
         val observable = UnicastSubject.create<Notification<*>>()
 
         require(observableContext.observableMap.getIfPresent(observableId) == null) {
@@ -97,6 +95,6 @@ object  RpcClientObservableSerializer : CustomSerializer.Implements<Observable<*
             output: SerializationOutput,
             context: SerializationContext
     ) {
-       throw NotSupportedException()
+        throw NotSupportedException()
     }
 }
