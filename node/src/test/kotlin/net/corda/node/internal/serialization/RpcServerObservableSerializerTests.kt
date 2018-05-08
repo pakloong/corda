@@ -2,6 +2,7 @@ package net.corda.node.internal.serialization
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.common.collect.LinkedHashMultimap
+import com.nhaarman.mockito_kotlin.mock
 import junit.framework.TestFailure
 import net.corda.core.context.Trace
 import net.corda.core.serialization.SerializationContext
@@ -19,6 +20,7 @@ import net.corda.nodeapi.internal.serialization.amqp.amqpMagic
 import org.apache.activemq.artemis.api.core.SimpleString
 import org.junit.Test
 import rx.Observable
+import rx.Subscription
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -33,7 +35,7 @@ class RpcServerObservableSerializerTests {
                 .maximumSize(100)
                 .build()
 
-        subMap.put(Trace.InvocationId("test1", Instant.now()), ObservableSubscription(TestSubscription()))
+        subMap.put(Trace.InvocationId("test1", Instant.now()), ObservableSubscription(mock<Subscription>()))
 
         return subMap
     }

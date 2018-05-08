@@ -4,7 +4,6 @@ import net.corda.client.rpc.internal.ObservableContext as ClientObservableContex
 import net.corda.client.rpc.internal.RpcObservableMap
 import net.corda.core.internal.ThreadBox
 import net.corda.core.context.Trace
-import net.corda.node.internal.serialization.testutils.TestSubscription
 import net.corda.node.internal.serialization.testutils.AMQPRoundTripRPCSerializationScheme
 import net.corda.node.internal.serialization.testutils.TestObservableContext as ServerObservableContext
 import net.corda.node.services.messaging.ObservableSubscription
@@ -16,6 +15,7 @@ import co.paralleluniverse.common.util.SameThreadExecutor
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.RemovalCause
 import com.github.benmanes.caffeine.cache.RemovalListener
+import com.nhaarman.mockito_kotlin.mock
 import net.corda.client.rpc.internal.serialization.amqp.RpcClientObservableSerializer
 import net.corda.node.internal.serialization.testutils.serializationContext
 import net.corda.node.serialization.amqp.RpcServerObservableSerializer
@@ -24,6 +24,7 @@ import org.apache.activemq.artemis.api.core.SimpleString
 import org.junit.Test
 import rx.Notification
 import rx.Observable
+import rx.Subscription
 import rx.subjects.UnicastSubject
 import java.time.Instant
 import java.util.*
@@ -41,7 +42,7 @@ class RoundTripObservableSerializerTests {
                 .maximumSize(100)
                 .build()
 
-        subMap.put(id, ObservableSubscription(TestSubscription()))
+        subMap.put(id, ObservableSubscription(mock<Subscription>()))
 
         return subMap
     }
