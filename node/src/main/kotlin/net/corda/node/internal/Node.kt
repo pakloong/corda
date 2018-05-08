@@ -384,10 +384,10 @@ open class Node(configuration: NodeConfiguration,
                     registerScheme(KryoClientSerializationScheme())
                 },
                 p2pContext = AMQP_P2P_CONTEXT.withClassLoader(classloader),
-                rpcServerContext = KRYO_RPC_SERVER_CONTEXT.withClassLoader(classloader),
+                rpcServerContext = AMQP_RPC_SERVER_CONTEXT.withClassLoader(classloader),
                 storageContext = AMQP_STORAGE_CONTEXT.withClassLoader(classloader),
                 checkpointContext = KRYO_CHECKPOINT_CONTEXT.withClassLoader(classloader),
-                rpcClientContext = if (configuration.shouldInitCrashShell()) KRYO_RPC_CLIENT_CONTEXT.withClassLoader(classloader) else null) //even Shell embeded in the node connects via RPC to the node
+                rpcClientContext = if (configuration.shouldInitCrashShell()) AMQP_RPC_CLIENT_CONTEXT.withClassLoader(classloader) else null) //even Shell embeded in the node connects via RPC to the node
     }
 
     private var rpcMessagingClient: RPCMessagingClient? = null
