@@ -17,7 +17,9 @@ class RpcClientCordaFutureSerializer (factory: SerializerFactory)
         try {
             return proxy.observable.toFuture()
         } catch (e: NotSerializableException) {
-            throw (NotSerializableException("Failed to deserialize Future from proxy Observable - ${e.message}"))
+            throw NotSerializableException("Failed to deserialize Future from proxy Observable - ${e.message}\n").apply {
+                initCause(e.cause)
+            }
         }
     }
 
