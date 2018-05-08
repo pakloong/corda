@@ -41,16 +41,15 @@ object RpcClientObservableSerializer : CustomSerializer.Implements<Observable<*>
         }
     }
 
-
     override val schemaForDocumentation = Schema(
             listOf(
                     RestrictedType(
-                            type.toString(),
-                            "",
-                            listOf(type.toString()),
-                            SerializerFactory.primitiveTypeName(ByteArray::class.java)!!,
-                            descriptor,
-                            emptyList())))
+                            name = type.toString(),
+                            label = "",
+                            provides = listOf(type.toString()),
+                            source = SerializerFactory.primitiveTypeName(ByteArray::class.java)!!,
+                            descriptor = descriptor,
+                            choices = emptyList())))
 
     override fun readObject(obj: Any, schemas: SerializationSchemas, input: DeserializationInput,
                             context: SerializationContext

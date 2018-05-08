@@ -7,6 +7,7 @@ import net.corda.node.services.messaging.ObservableContextInterface
 import net.corda.node.services.messaging.ObservableSubscription
 import net.corda.nodeapi.RPCApi
 import net.corda.nodeapi.internal.serialization.amqp.*
+import net.corda.nodeapi.internal.serialization.amqp.SerializerFactory.Companion.nameForType
 import org.apache.qpid.proton.codec.Data
 
 import rx.Notification
@@ -30,8 +31,16 @@ class RpcServerObservableSerializer : CustomSerializer.Implements<Observable<*>>
                 RpcServerObservableSerializer.RpcObservableContextKey, observableContext)
     }
 
-    override val schemaForDocumentation: Schema
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+
+    override val schemaForDocumentation = Schema(
+            listOf(
+                    RestrictedType(
+                            name = type.toString(),
+                            label = "",
+                            provides = listOf(type.toString()),
+                            source = SerializerFactory.primitiveTypeName(ByteArray::class.java)!!,
+                            descriptor = descriptor,
+                            choices = emptyList())))
 
     override fun readObject(
             obj: Any, schemas: SerializationSchemas,
