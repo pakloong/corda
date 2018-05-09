@@ -30,7 +30,7 @@ import kotlin.test.assertTrue
 
 class RpcServerObservableSerializerTests {
 
-    private fun subscriptionMap() : ObservableSubscriptionMap {
+    private fun subscriptionMap(): ObservableSubscriptionMap {
         val subMap: ObservableSubscriptionMap = Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES)
                 .maximumSize(100)
                 .build()
@@ -46,8 +46,7 @@ class RpcServerObservableSerializerTests {
 
         try {
             sf.register(RpcServerObservableSerializer())
-        }
-        catch (e: Exception) {
+        } catch (e: Exception) {
             throw Error("Observable serializer must be registerable with factory, unexpected exception - ${e.message}")
         }
     }
@@ -58,7 +57,7 @@ class RpcServerObservableSerializerTests {
                 subscriptionMap(),
                 clientAddressToObservables = ConcurrentHashMap(),
                 deduplicationIdentity = "thisIsATest",
-                clientAddress = SimpleString ("clientAddress"))
+                clientAddress = SimpleString("clientAddress"))
 
         val newContext = RpcServerObservableSerializer.createContext(serializationContext, observable)
 
@@ -74,7 +73,7 @@ class RpcServerObservableSerializerTests {
                 subscriptionMap(),
                 clientAddressToObservables = ConcurrentHashMap(),
                 deduplicationIdentity = "thisIsATest",
-                clientAddress = SimpleString (testClientAddress))
+                clientAddress = SimpleString(testClientAddress))
 
         val sf = SerializerFactory(
                 cl = javaClass.classLoader,
@@ -83,14 +82,13 @@ class RpcServerObservableSerializerTests {
             register(RpcServerObservableSerializer())
         }
 
-        val obs = Observable.create<Int>( { 12 })
+        val obs = Observable.create<Int>({ 12 })
         val newContext = RpcServerObservableSerializer.createContext(serializationContext, observable)
 
         try {
             SerializationOutput(sf).serializeAndReturnSchema(obs, newContext)
-        }
-        catch (e: Exception) {
-            throw Error ("Serialization of observable should not throw - ${e.message}")
+        } catch (e: Exception) {
+            throw Error("Serialization of observable should not throw - ${e.message}")
         }
     }
 }

@@ -31,16 +31,31 @@ class RpcServerObservableSerializer : CustomSerializer.Implements<Observable<*>>
                 RpcServerObservableSerializer.RpcObservableContextKey, observableContext)
     }
 
-
     override val schemaForDocumentation = Schema(
             listOf(
-                    RestrictedType(
+                    CompositeType(
                             name = type.toString(),
                             label = "",
-                            provides = listOf(type.toString()),
-                            source = SerializerFactory.primitiveTypeName(ByteArray::class.java)!!,
+                            provides = emptyList(),
                             descriptor = descriptor,
-                            choices = emptyList())))
+                            fields = listOf(
+                                    Field(
+                                            name = "observableId",
+                                            type = "string",
+                                            requires = emptyList(),
+                                            default = null,
+                                            label = null,
+                                            mandatory = true,
+                                            multiple = false),
+                                    Field(
+                                            name = "observableInstant",
+                                            type = "long",
+                                            requires = emptyList(),
+                                            default = null,
+                                            label = null,
+                                            mandatory = true,
+                                            multiple = false)
+                            ))))
 
     override fun readObject(
             obj: Any, schemas: SerializationSchemas,

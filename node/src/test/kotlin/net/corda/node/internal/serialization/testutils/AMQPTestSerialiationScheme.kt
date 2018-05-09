@@ -38,9 +38,7 @@ class AMQPRoundTripRPCSerializationScheme(
     fun rpcClientSerializerFactory(observableContext: ClientObservableContext, id: Trace.InvocationId) =
             rpcClientSerializerFactory(
                     RpcClientObservableSerializer.createContext(serializationContext, observableContext)
-                        .withProperty(RPCApi.RpcRequestOrObservableIdKey, id)
-            )
-
+                        .withProperty(RPCApi.RpcRequestOrObservableIdKey, id))
 
     fun rpcServerSerializerFactory(observableContext: TestObservableContext) =
             rpcServerSerializerFactory(

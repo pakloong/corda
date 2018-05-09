@@ -13,7 +13,6 @@ import net.corda.nodeapi.internal.serialization.amqp.SerializationOutput
 
 import co.paralleluniverse.common.util.SameThreadExecutor
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.github.benmanes.caffeine.cache.RemovalCause
 import com.github.benmanes.caffeine.cache.RemovalListener
 import com.nhaarman.mockito_kotlin.mock
 import net.corda.client.rpc.internal.serialization.amqp.RpcClientObservableSerializer
@@ -32,7 +31,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
 class RoundTripObservableSerializerTests {
-
     private fun getID() = Trace.InvocationId("test1", Instant.now())
 
     private fun subscriptionMap(
@@ -55,9 +53,6 @@ class RoundTripObservableSerializerTests {
         val onObservableRemove = RemovalListener<Trace.InvocationId, UnicastSubject<Notification<*>>> { key, value, cause ->
             val observableId = key!!
 
-            if (cause == RemovalCause.COLLECTED) {
-
-            }
             observablesToReap.locked { observables.add(observableId) }
         }
 

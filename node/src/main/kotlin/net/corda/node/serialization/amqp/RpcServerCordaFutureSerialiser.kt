@@ -7,20 +7,19 @@ import net.corda.nodeapi.internal.serialization.amqp.SerializerFactory
 import rx.Observable
 import java.io.NotSerializableException
 
-class RpcServerCordaFutureSerialiser (factory: SerializerFactory)
+class RpcServerCordaFutureSerializer(factory: SerializerFactory)
     : CustomSerializer.Proxy<CordaFuture<*>,
-        RpcServerCordaFutureSerialiser.FutureProxy>(
-        CordaFuture::class.java, RpcServerCordaFutureSerialiser.FutureProxy::class.java, factory
+        RpcServerCordaFutureSerializer.FutureProxy>(
+        CordaFuture::class.java, RpcServerCordaFutureSerializer.FutureProxy::class.java, factory
 ) {
-    override fun fromProxy(proxy: RpcServerCordaFutureSerialiser.FutureProxy): CordaFuture<*> {
+    override fun fromProxy(proxy: RpcServerCordaFutureSerializer.FutureProxy): CordaFuture<*> {
         throw UnsupportedOperationException()
     }
 
-    override fun toProxy(obj: CordaFuture<*>): RpcServerCordaFutureSerialiser.FutureProxy {
+    override fun toProxy(obj: CordaFuture<*>): RpcServerCordaFutureSerializer.FutureProxy {
         try {
             return FutureProxy(obj.toObservable())
-        }
-        catch (e: NotSerializableException) {
+        } catch (e: NotSerializableException) {
             throw (NotSerializableException("Failed to serialize Future as proxy Observable - ${e.message}"))
         }
     }
