@@ -38,7 +38,8 @@ class AMQPClientSerializationScheme(
     }
 
     override fun canDeserializeVersion(magic: CordaSerializationMagic, target: SerializationContext.UseCase) =
-        magic == amqpMagic && target == SerializationContext.UseCase.RPCClient
+        magic == amqpMagic && (
+            target == SerializationContext.UseCase.RPCClient || target == SerializationContext.UseCase.P2P)
 
     override fun rpcClientSerializerFactory(context: SerializationContext): SerializerFactory {
         return SerializerFactory(context.whitelist, ClassLoader.getSystemClassLoader()).apply {
