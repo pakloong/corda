@@ -13,7 +13,6 @@ import net.corda.nodeapi.internal.serialization.DefaultWhitelist
 import net.corda.nodeapi.internal.serialization.MutableClassWhitelist
 import net.corda.nodeapi.internal.serialization.SerializationScheme
 import java.lang.reflect.Modifier
-import java.security.PublicKey
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
