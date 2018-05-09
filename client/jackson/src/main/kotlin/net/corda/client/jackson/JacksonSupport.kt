@@ -1,25 +1,31 @@
 package net.corda.client.jackson
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.annotation.JsonTypeInfo.Id
 import com.fasterxml.jackson.core.*
 import com.fasterxml.jackson.databind.*
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.fasterxml.jackson.databind.deser.std.NumberDeserializers
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.convertValue
+import com.google.common.base.CaseFormat.LOWER_CAMEL
+import com.google.common.base.CaseFormat.UPPER_CAMEL
 import net.corda.client.jackson.internal.addSerAndDeser
+import net.corda.client.jackson.internal.annotate
 import net.corda.client.jackson.internal.jsonObject
 import net.corda.client.jackson.internal.readValueAs
 import net.corda.core.CordaInternal
 import net.corda.core.DoNotImplement
-import net.corda.core.contracts.Amount
-import net.corda.core.contracts.ContractState
-import net.corda.core.contracts.StateRef
+import net.corda.core.contracts.*
 import net.corda.core.crypto.*
 import net.corda.core.crypto.TransactionSignature
 import net.corda.core.identity.*
@@ -29,15 +35,13 @@ import net.corda.core.messaging.CordaRPCOps
 import net.corda.core.node.NodeInfo
 import net.corda.core.node.services.IdentityService
 import net.corda.core.serialization.SerializedBytes
+import net.corda.core.serialization.deserialize
 import net.corda.core.serialization.serialize
 import net.corda.core.transactions.CoreTransaction
 import net.corda.core.transactions.NotaryChangeWireTransaction
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.WireTransaction
-import net.corda.core.utilities.NetworkHostAndPort
-import net.corda.core.utilities.OpaqueBytes
-import net.corda.core.utilities.parsePublicKeyBase58
-import net.corda.core.utilities.toBase58String
+import net.corda.core.utilities.*
 import java.math.BigDecimal
 import java.security.PublicKey
 import java.util.*
@@ -96,19 +100,27 @@ object JacksonSupport {
             addSerAndDeser<BigDecimal>(toStringSerializer, NumberDeserializers.BigDecimalDeserializer())
             addSerAndDeser<SecureHash.SHA256>(toStringSerializer, SecureHashDeserializer())
             addSerAndDeser(toStringSerializer, AmountDeserializer)
-            addSerAndDeser(OpaqueBytesSerializer, OpaqueBytesDeserializer)
+//            addSerAndDeser(OpaqueBytesSerializer, OpaqueBytesDeserializer)
             addSerAndDeser(toStringSerializer, CordaX500NameDeserializer)
             addSerAndDeser(PublicKeySerializer, PublicKeyDeserializer)
             addDeserializer(CompositeKey::class.java, CompositeKeyDeseriaizer)
             addSerAndDeser(toStringSerializer, NetworkHostAndPortDeserializer)
             // TODO Add deserialization which follows the same lookup logic as Party
-            addSerializer(PartyAndCertificate::class.java, PartyAndCertificateSerializer)
+            addSerializer(PartyAndCertificateSerializer)
             addDeserializer(NodeInfo::class.java, NodeInfoDeserializer)
+            addSerAndDeser(SerializedBytesSerializer, SerializedBytesDeserializer)
+            addSerializer(SignedTransaction::class.java, SignedTransactionSerializer)
 
-            listOf(TransactionSignatureSerde, SignedTransactionSerde).forEach { serde -> serde.applyTo(this) }
+//            listOf(TransactionSignatureSerde, SignedTransactionSerde).forEach { serde -> serde.applyTo(this) }
 
             // Using mixins to fine-tune the default serialised output
-            setMixInAnnotation(WireTransaction::class.java, WireTransactionMixin::class.java)
+            setMixInAnnotation(ByteSequence::class.java, ByteSequenceMixin::class.java)
+            setMixInAnnotation(SecureHash::class.java, SecureHashMixin::class.java)
+            setMixInAnnotation(PrivacySalt::class.java, PrivacySaltMixin::class.java)
+            setMixInAnnotation(WireTransaction::class.java, WireTransactionMixin2::class.java)
+            setMixInAnnotation(TransactionState::class.java, TransactionStateMixin::class.java)
+            setMixInAnnotation(Command::class.java, CommandMixin::class.java)
+            setMixInAnnotation(TransactionSignature::class.java, TransactionSignatureMixin::class.java)
             setMixInAnnotation(NodeInfo::class.java, NodeInfoMixin::class.java)
         }
     }
@@ -200,12 +212,88 @@ object JacksonSupport {
                 // TODO Add configurable option to output the certPath
             }
         }
+        override fun handledType(): Class<PartyAndCertificate> = PartyAndCertificate::class.java
+    }
+
+    private object SerializedBytesSerializer : JsonSerializer<SerializedBytes<*>>() {
+        override fun serialize(value: SerializedBytes<*>, gen: JsonGenerator, serializers: SerializerProvider) {
+            val deserialized = value.deserialize<Any>()
+            gen.annotate { deserialized.javaClass.name }
+            gen.writeObject(deserialized)
+        }
+    }
+
+    private object SerializedBytesDeserializer : JsonDeserializer<SerializedBytes<*>>() {
+        override fun deserialize(parser: JsonParser, ctxt: DeserializationContext): SerializedBytes<Any> {
+            return SerializedBytes(parser.binaryValue)
+        }
+    }
+
+    private object SignedTransactionSerializer : JsonSerializer<SignedTransaction>() {
+        override fun serialize(value: SignedTransaction, gen: JsonGenerator, serializers: SerializerProvider) {
+            gen.writeObject(SignedTxWrapper(value.coreTransaction, value.sigs))
+        }
+    }
+
+    private object SignedTransactionDeserializer : JsonDeserializer<SignedTransaction>() {
+        override fun deserialize(parser: JsonParser, context: DeserializationContext): SignedTransaction {
+            val wrapper = parser.readValueAs<SignedTxWrapper>()
+            return SignedTransaction(wrapper.core, wrapper.signatures)
+        }
+    }
+
+    private data class SignedTxWrapper(
+            @JsonTypeInfo(use = Id.CLASS)
+            val core: CoreTransaction,
+            val signatures: List<TransactionSignature>
+    )
+
+    @JsonIgnoreProperties(
+            "componentGroups",
+            "requiredSigningKeys",
+            "availableComponentGroups",
+            "merkleTree",
+            "outputStates",
+            "groupHashes\$core_main",
+            "groupsMerkleRoots\$core_main",
+            "availableComponentNonces\$core_main",
+            "availableComponentHashes\$core_main"
+    )
+    private interface WireTransactionMixin2
+
+    @Suppress("unused")
+    private interface TransactionStateMixin {
+        @get:JsonTypeInfo(use = Id.CLASS) val data: Any
+        @get:JsonTypeInfo(use = Id.CLASS) val constraint: Any
     }
 
     @Suppress("unused")
-    private interface NodeInfoMixin {
-        @get:JsonIgnore val legalIdentities: Any  // This is already covered by legalIdentitiesAndCerts
+    private interface CommandMixin {
+        @get:JsonTypeInfo(use = Id.CLASS) val value: Any
     }
+
+    private class ByteSequenceSerializer : JsonSerializer<ByteSequence>() {
+        override fun serialize(value: ByteSequence, gen: JsonGenerator, serializers: SerializerProvider) {
+            gen.writeBinary(value.bytes, value.offset, value.size)
+        }
+    }
+
+    @JsonSerialize(using = ByteSequenceSerializer::class)
+    private interface ByteSequenceMixin
+
+    @JsonSerialize(using = com.fasterxml.jackson.databind.ser.std.ToStringSerializer::class)
+    private interface SecureHashMixin
+
+    @JsonSerialize(using = com.fasterxml.jackson.databind.ser.std.ToStringSerializer::class)
+    private interface PrivacySaltMixin
+
+    // Use the default serializer but ignore the offset and size properties
+    @JsonIgnoreProperties("offset", "size")
+    @JsonSerialize(using = JsonSerializer.None::class)
+    private interface TransactionSignatureMixin
+
+    @JsonIgnoreProperties("legalIdentities")  // This is already covered by legalIdentitiesAndCerts
+    private interface NodeInfoMixin
 
     private interface JsonSerde<TYPE> {
         val type: Class<TYPE>
@@ -467,7 +555,7 @@ object JacksonSupport {
     abstract class SignedTransactionMixin {
         @JsonIgnore abstract fun getTxBits(): SerializedBytes<CoreTransaction>
         @JsonProperty("signatures") protected abstract fun getSigs(): List<TransactionSignature>
-        @JsonProperty protected abstract fun getTransaction(): CoreTransaction  // TODO It seems this should be coreTransaction
+        @JsonProperty protected abstract fun getTransaction(): CoreTransaction
         @JsonIgnore abstract fun getTx(): WireTransaction
         @JsonIgnore abstract fun getNotaryChangeTx(): NotaryChangeWireTransaction
         @JsonIgnore abstract fun getInputs(): List<StateRef>

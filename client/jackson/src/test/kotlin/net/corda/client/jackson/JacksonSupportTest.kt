@@ -5,9 +5,11 @@ import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.BinaryNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.nhaarman.mockito_kotlin.doReturn
 import com.nhaarman.mockito_kotlin.whenever
+import net.corda.client.jackson.internal.valueAs
 import net.corda.core.contracts.Amount
 import net.corda.core.cordapp.CordappProvider
 import net.corda.core.crypto.*
@@ -18,6 +20,9 @@ import net.corda.core.identity.CordaX500Name
 import net.corda.core.identity.Party
 import net.corda.core.node.NodeInfo
 import net.corda.core.node.ServiceHub
+import net.corda.core.serialization.CordaSerializable
+import net.corda.core.serialization.SerializedBytes
+import net.corda.core.serialization.serialize
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.utilities.NetworkHostAndPort
 import net.corda.core.utilities.OpaqueBytes
@@ -54,7 +59,7 @@ class JacksonSupportTest {
     val testSerialization = SerializationEnvironmentRule()
 
     private val partyObjectMapper = TestPartyObjectMapper()
-    private val mapper = JacksonSupport.createPartyObjectMapper(partyObjectMapper)
+    private val mapper = JacksonSupport.createPartyObjectMapper(partyObjectMapper, YAMLFactory())
 
     private lateinit var services: ServiceHub
     private lateinit var cordappProvider: CordappProvider
@@ -92,27 +97,40 @@ class JacksonSupportTest {
     }
 
     @Test
-    fun SignedTransaction() {
-        val attachmentRef = SecureHash.randomSHA256()
-        doReturn(attachmentRef).whenever(cordappProvider).getContractAttachmentID(DummyContract.PROGRAM_ID)
-        doReturn(testNetworkParameters()).whenever(services).networkParameters
-
-        val writer = mapper.writer()
-        val stx = makeDummyStx()
-        val json = writer.writeValueAsString(stx)
-
-        val deserializedTransaction = mapper.readValue(json, SignedTransaction::class.java)
-
-        assertThat(deserializedTransaction).isEqualTo(stx)
-    }
-
-    @Test
     fun OpaqueBytes() {
         val opaqueBytes = OpaqueBytes(secureRandomBytes(128))
         val json = mapper.valueToTree<BinaryNode>(opaqueBytes)
         assertThat(json.binaryValue()).isEqualTo(opaqueBytes.bytes)
         assertThat(json.asText()).isEqualTo(opaqueBytes.bytes.toBase64())
         assertThat(mapper.convertValue<OpaqueBytes>(json)).isEqualTo(opaqueBytes)
+    }
+
+    @Test
+    fun SerializedBytes() {
+        val data = TestData(BOB_NAME, "Summary", SubTestData(1234))
+        val serialised = data.serialize()
+        val json = mapper.valueToTree<ObjectNode>(serialised)
+        assertThat(mapper.convertValue<TestData>(json)).isEqualTo(data)
+        assertThat(mapper.convertValue<SerializedBytes<*>>(BinaryNode(serialised.bytes))).isEqualTo(serialised)
+    }
+
+    @Test
+    fun SignedTransaction() {
+        val attachmentRef = SecureHash.randomSHA256()
+        doReturn(attachmentRef).whenever(cordappProvider).getContractAttachmentID(DummyContract.PROGRAM_ID)
+        doReturn(testNetworkParameters()).whenever(services).networkParameters
+
+        val stx = makeDummyStx()
+        val json = mapper.writeValueAsString(stx)
+        println(json)
+        println("******")
+        println("******")
+        println("******")
+        println(JacksonSupport.createPartyObjectMapper(partyObjectMapper).writeValueAsString(stx))
+
+        val deserializedTransaction = mapper.readValue(json, SignedTransaction::class.java)
+
+        assertThat(deserializedTransaction).isEqualTo(stx)
     }
 
     @Test
@@ -221,8 +239,8 @@ class JacksonSupportTest {
     fun `PartyAndCertificate serialisation`() {
         val json = mapper.valueToTree<ObjectNode>(MINI_CORP.identity)
         assertThat(json.fieldNames()).containsOnly("name", "owningKey")
-        assertThat(mapper.convertValue<CordaX500Name>(json["name"])).isEqualTo(MINI_CORP.name)
-        assertThat(mapper.convertValue<PublicKey>(json["owningKey"])).isEqualTo(MINI_CORP.publicKey)
+        assertThat(json["name"].valueAs<CordaX500Name>(mapper)).isEqualTo(MINI_CORP.name)
+        assertThat(json["owningKey"].valueAs<PublicKey>(mapper)).isEqualTo(MINI_CORP.publicKey)
     }
 
     @Test
@@ -231,11 +249,11 @@ class JacksonSupportTest {
         val json = mapper.valueToTree<ObjectNode>(nodeInfo)
         assertThat(json.fieldNames()).containsOnly("addresses", "legalIdentitiesAndCerts", "platformVersion", "serial")
         val address = (json["addresses"] as ArrayNode).also { assertThat(it).hasSize(1) }[0]
-        assertThat(mapper.convertValue<NetworkHostAndPort>(address)).isEqualTo(nodeInfo.addresses[0])
+        assertThat(address.valueAs<NetworkHostAndPort>(mapper)).isEqualTo(nodeInfo.addresses[0])
         val identity = (json["legalIdentitiesAndCerts"] as ArrayNode).also { assertThat(it).hasSize(1) }[0]
-        assertThat(mapper.convertValue<CordaX500Name>(identity["name"])).isEqualTo(ALICE_NAME)
-        assertThat(mapper.convertValue<Int>(json["platformVersion"])).isEqualTo(nodeInfo.platformVersion)
-        assertThat(mapper.convertValue<Long>(json["serial"])).isEqualTo(nodeInfo.serial)
+        assertThat(identity["name"].valueAs<CordaX500Name>(mapper)).isEqualTo(ALICE_NAME)
+        assertThat(json["platformVersion"].intValue()).isEqualTo(nodeInfo.platformVersion)
+        assertThat(json["serial"].longValue()).isEqualTo(nodeInfo.serial)
     }
 
     @Test
@@ -279,6 +297,12 @@ class JacksonSupportTest {
         assertThat(json.textValue()).isEqualTo(value.toString())
         assertThat(mapper.convertValue<T>(json)).isEqualTo(value)
     }
+
+    @CordaSerializable
+    private data class TestData(val name: CordaX500Name, val summary: String, val subData: SubTestData)
+
+    @CordaSerializable
+    private data class SubTestData(val value: Int)
 
     private class TestPartyObjectMapper : JacksonSupport.PartyObjectMapper {
         val identities = ArrayList<Party>()
