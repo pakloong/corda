@@ -13,5 +13,5 @@ class TestObservableContext(
         override val deduplicationIdentity: String,
         override val clientAddress: SimpleString
 ) : ObservableContextInterface {
-    override fun sendMessage(serverToClient: RPCApi.ServerToClient) { }M
+    override fun sendMessage(serverToClient: RPCApi.ServerToClient) { }
 }
