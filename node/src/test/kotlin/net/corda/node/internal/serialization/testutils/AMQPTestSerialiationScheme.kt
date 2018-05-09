@@ -18,11 +18,14 @@ import net.corda.client.rpc.internal.ObservableContext as ClientObservableContex
  * operations
  */
 class AMQPRoundTripRPCSerializationScheme(
+        private val serializationContext: SerializationContext,
         cordappCustomSerializers: Set<SerializationCustomSerializer<*, *>> = emptySet())
     : AbstractAMQPSerializationScheme(
         cordappCustomSerializers
 ) {
-    constructor(cordapps: List<Cordapp>) : this(cordapps.customSerializers)
+    constructor(
+            serializationContext: SerializationContext,
+            cordapps: List<Cordapp>) : this(serializationContext, cordapps.customSerializers)
 
     override fun rpcClientSerializerFactory(context: SerializationContext): SerializerFactory {
         return SerializerFactory(cl = javaClass.classLoader, whitelist = AllWhitelist).apply {
