@@ -7,7 +7,6 @@ import net.corda.node.services.messaging.ObservableContextInterface
 import net.corda.node.services.messaging.ObservableSubscription
 import net.corda.nodeapi.RPCApi
 import net.corda.nodeapi.internal.serialization.amqp.*
-import net.corda.nodeapi.internal.serialization.amqp.SerializerFactory.Companion.nameForType
 import org.apache.qpid.proton.codec.Data
 
 import rx.Notification
@@ -17,6 +16,12 @@ import java.io.NotSerializableException
 
 import java.lang.reflect.Type
 
+/**
+ * Server side serializer that notionally serializes RxObservables when used by the RPC
+ * framework for event subscriptions. Notional in the sense that the actual observable
+ * isn't serialized, rather a reference to the observable is, this is then used by
+ * the client side RPC handler to subscribe to the observable stream.
+ */
 class RpcServerObservableSerializer : CustomSerializer.Implements<Observable<*>>(
         Observable::class.java
 ) {

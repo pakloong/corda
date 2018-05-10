@@ -188,7 +188,7 @@ interface SerializationContext {
 /**
  * Set of well known properties that may be set on a serialization context. This doesn't preclude
  * others being set that aren't keyed on this enumeration, but for general use properties adding a
- * well known key here is preffered.
+ * well known key here is preferred.
  */
 enum class ContextPropertyKeys {
     SERIALIZERS

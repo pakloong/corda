@@ -23,7 +23,7 @@ import net.corda.node.services.messaging.RPCServerConfiguration
 import net.corda.nodeapi.ArtemisTcpTransport
 import net.corda.nodeapi.ConnectionDirection
 import net.corda.nodeapi.RPCApi
-import net.corda.nodeapi.internal.serialization.KRYO_RPC_CLIENT_CONTEXT
+import net.corda.nodeapi.internal.serialization.AMQP_RPC_CLIENT_CONTEXT
 import net.corda.testing.common.internal.testNetworkParameters
 import net.corda.testing.core.MAX_MESSAGE_SIZE
 import net.corda.testing.driver.JmxPolicy
@@ -512,7 +512,7 @@ class RandomRpcUser {
             val username = args[2]
             val password = args[3]
             AMQPClientSerializationScheme.initialiseSerialization()
-            val handle = RPCClient<RPCOps>(hostAndPort, null, serializationContext = KRYO_RPC_CLIENT_CONTEXT).start(rpcClass, username, password)
+            val handle = RPCClient<RPCOps>(hostAndPort, null, serializationContext = AMQP_RPC_CLIENT_CONTEXT).start(rpcClass, username, password)
             val callGenerators = rpcClass.declaredMethods.map { method ->
                 Generator.sequence(method.parameters.map {
                     generatorStore[it.type] ?: throw Exception("No generator for ${it.type}")

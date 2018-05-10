@@ -1,21 +1,15 @@
 package net.corda.node.internal.serialization
 
+import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.google.common.collect.LinkedHashMultimap
 import com.nhaarman.mockito_kotlin.mock
-import junit.framework.TestFailure
 import net.corda.core.context.Trace
-import net.corda.core.serialization.SerializationContext
 import net.corda.node.internal.serialization.testutils.*
 import net.corda.node.serialization.amqp.RpcServerObservableSerializer
 import net.corda.node.services.messaging.ObservableSubscription
-import net.corda.node.services.messaging.ObservableSubscriptionMap
-import net.corda.nodeapi.internal.serialization.AMQP_RPC_SERVER_CONTEXT
 import net.corda.nodeapi.internal.serialization.AllWhitelist
-import net.corda.nodeapi.internal.serialization.SerializationContextImpl
 import net.corda.nodeapi.internal.serialization.amqp.SerializationOutput
 import net.corda.nodeapi.internal.serialization.amqp.SerializerFactory
-import net.corda.nodeapi.internal.serialization.amqp.amqpMagic
 
 import org.apache.activemq.artemis.api.core.SimpleString
 import org.junit.Test
@@ -25,13 +19,12 @@ import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class RpcServerObservableSerializerTests {
 
-    private fun subscriptionMap(): ObservableSubscriptionMap {
-        val subMap: ObservableSubscriptionMap = Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES)
+    private fun subscriptionMap(): Cache<Trace.InvocationId, ObservableSubscription> {
+        val subMap: Cache<Trace.InvocationId, ObservableSubscription> = Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES)
                 .maximumSize(100)
                 .build()
 

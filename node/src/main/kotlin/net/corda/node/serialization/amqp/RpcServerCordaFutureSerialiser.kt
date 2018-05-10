@@ -7,6 +7,10 @@ import net.corda.nodeapi.internal.serialization.amqp.SerializerFactory
 import rx.Observable
 import java.io.NotSerializableException
 
+/**
+ * Serializer for [CordaFuture] objects where Futures are converted to Observables and
+ * are thus dealt with by the [RpcServerObservableSerializer]
+ */
 class RpcServerCordaFutureSerializer(factory: SerializerFactory)
     : CustomSerializer.Proxy<CordaFuture<*>,
         RpcServerCordaFutureSerializer.FutureProxy>(

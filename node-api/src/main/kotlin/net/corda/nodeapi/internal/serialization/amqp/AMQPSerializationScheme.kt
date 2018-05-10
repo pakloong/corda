@@ -118,7 +118,7 @@ abstract class AbstractAMQPSerializationScheme(
         }
 
         context.properties[ContextPropertyKeys.SERIALIZERS]?.apply {
-            uncheckedCast<Any, List<CustomSerializer<out Any>>>(this).map {
+            uncheckedCast<Any, List<CustomSerializer<out Any>>>(this).forEach {
                 factory.register(it)
             }
         }

@@ -46,7 +46,7 @@ import java.util.*
 import java.util.concurrent.*
 import kotlin.concurrent.thread
 
-typealias ObservableSubscriptionMap = Cache<InvocationId, ObservableSubscription>
+private typealias ObservableSubscriptionMap = Cache<InvocationId, ObservableSubscription>
 
 data class RPCServerConfiguration(
         /** The number of threads to use for handling RPC requests */

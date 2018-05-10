@@ -6,8 +6,12 @@ import net.corda.core.serialization.SerializationCustomSerializer
 import net.corda.nodeapi.internal.serialization.CordaSerializationMagic
 import net.corda.nodeapi.internal.serialization.amqp.AbstractAMQPSerializationScheme
 import net.corda.nodeapi.internal.serialization.amqp.SerializerFactory
-import net.corda.nodeapi.internal.serialization.amqp.custom.RXNotificationSerializer
+import net.corda.nodeapi.internal.serialization.amqp.custom.RxNotificationSerializer
 
+/**
+ * When set as the serialization scheme, defines the RPC Server serialization scheme as using the Corda
+ * AMQP implementation.
+ */
 class AMQPServerSerializationScheme(
         cordappCustomSerializers: Set<SerializationCustomSerializer<*, *>> = emptySet())
     : AbstractAMQPSerializationScheme(
@@ -26,7 +30,7 @@ class AMQPServerSerializationScheme(
         ).apply {
             register(RpcServerObservableSerializer())
             register(RpcServerCordaFutureSerializer(this))
-            register(RXNotificationSerializer(this))
+            register(RxNotificationSerializer(this))
         }
 
     override fun canDeserializeVersion(magic: CordaSerializationMagic, target: SerializationContext.UseCase): Boolean {

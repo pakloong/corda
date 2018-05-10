@@ -16,6 +16,11 @@ import java.time.Instant
 import java.util.concurrent.atomic.AtomicInteger
 import javax.transaction.NotSupportedException
 
+/**
+ * Serializer for Rx[Observable] instances for the RPC Client library. Can only be used to deserialize such objects,
+ * just as the corresponding RPC server side code can only serialize them. Observables are only notionally serialized,
+ * what is actually sent is a reference to the observable that can then be subscribed to.
+ */
 object RpcClientObservableSerializer : CustomSerializer.Implements<Observable<*>>(Observable::class.java) {
     private object RpcObservableContextKey
 
@@ -67,6 +72,9 @@ object RpcClientObservableSerializer : CustomSerializer.Implements<Observable<*>
                                             multiple = false)
                             ))))
 
+    /**
+     * Converts the serialized form, a blob, back into an Observable
+     */
     override fun readObject(obj: Any, schemas: SerializationSchemas, input: DeserializationInput,
                             context: SerializationContext
     ): Observable<*> {

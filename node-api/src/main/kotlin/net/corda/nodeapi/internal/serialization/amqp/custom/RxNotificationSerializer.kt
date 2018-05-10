@@ -4,9 +4,9 @@ import net.corda.nodeapi.internal.serialization.amqp.CustomSerializer
 import net.corda.nodeapi.internal.serialization.amqp.SerializerFactory
 import rx.Notification
 
-class RXNotificationSerializer(
+class RxNotificationSerializer(
         factory: SerializerFactory
-) : CustomSerializer.Proxy<rx.Notification<*>, RXNotificationSerializer.Proxy>(
+) : CustomSerializer.Proxy<rx.Notification<*>, RxNotificationSerializer.Proxy>(
         Notification::class.java,
         Proxy::class.java,
         factory

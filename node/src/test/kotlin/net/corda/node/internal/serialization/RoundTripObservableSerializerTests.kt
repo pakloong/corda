@@ -1,17 +1,16 @@
 package net.corda.node.internal.serialization
 
 import net.corda.client.rpc.internal.ObservableContext as ClientObservableContext
-import net.corda.client.rpc.internal.RpcObservableMap
 import net.corda.core.internal.ThreadBox
 import net.corda.core.context.Trace
 import net.corda.node.internal.serialization.testutils.AMQPRoundTripRPCSerializationScheme
 import net.corda.node.internal.serialization.testutils.TestObservableContext as ServerObservableContext
 import net.corda.node.services.messaging.ObservableSubscription
-import net.corda.node.services.messaging.ObservableSubscriptionMap
 import net.corda.nodeapi.internal.serialization.amqp.DeserializationInput
 import net.corda.nodeapi.internal.serialization.amqp.SerializationOutput
 
 import co.paralleluniverse.common.util.SameThreadExecutor
+import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.RemovalListener
 import com.nhaarman.mockito_kotlin.mock
@@ -35,8 +34,8 @@ class RoundTripObservableSerializerTests {
 
     private fun subscriptionMap(
             id: Trace.InvocationId
-    ) : ObservableSubscriptionMap {
-        val subMap: ObservableSubscriptionMap = Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES)
+    ) : Cache<Trace.InvocationId, ObservableSubscription> {
+        val subMap: Cache<Trace.InvocationId, ObservableSubscription> = Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES)
                 .maximumSize(100)
                 .build()
 
@@ -49,7 +48,7 @@ class RoundTripObservableSerializerTests {
         var observables = ArrayList<Trace.InvocationId>()
     })
 
-    private fun createRpcObservableMap(): RpcObservableMap {
+    private fun createRpcObservableMap(): Cache<Trace.InvocationId, UnicastSubject<Notification<*>>> {
         val onObservableRemove = RemovalListener<Trace.InvocationId, UnicastSubject<Notification<*>>> { key, value, cause ->
             val observableId = key!!
 
