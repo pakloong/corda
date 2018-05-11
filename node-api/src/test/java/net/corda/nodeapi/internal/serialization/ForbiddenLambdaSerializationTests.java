@@ -4,13 +4,13 @@ import com.google.common.collect.Maps;
 import net.corda.core.serialization.SerializationContext;
 import net.corda.core.serialization.SerializationFactory;
 import net.corda.core.serialization.SerializedBytes;
-import net.corda.nodeapi.internal.serialization.kryo.CordaClosureBlacklistSerializer;
-import net.corda.nodeapi.internal.serialization.kryo.KryoSerializationSchemeKt;
+import net.corda.nodeapi.internal.serialization.amqp.SchemaKt;
 import net.corda.testing.core.SerializationEnvironmentRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.io.NotSerializableException;
 import java.io.Serializable;
 import java.util.EnumSet;
 import java.util.concurrent.Callable;
@@ -33,7 +33,7 @@ public final class ForbiddenLambdaSerializationTests {
     @Test
     public final void serialization_fails_for_serializable_java_lambdas() {
         contexts.forEach(ctx -> {
-            SerializationContext context = new SerializationContextImpl(KryoSerializationSchemeKt.getKryoMagic(),
+            SerializationContext context = new SerializationContextImpl(SchemaKt.getAmqpMagic(),
                     this.getClass().getClassLoader(), AllWhitelist.INSTANCE, Maps.newHashMap(), true, ctx, null);
             String value = "Hey";
             Callable<String> target = (Callable<String> & Serializable) () -> value;
@@ -41,12 +41,9 @@ public final class ForbiddenLambdaSerializationTests {
             Throwable throwable = catchThrowable(() -> serialize(target, context));
 
             assertThat(throwable).isNotNull();
-            assertThat(throwable).isInstanceOf(IllegalArgumentException.class);
-            if (ctx != SerializationContext.UseCase.RPCServer && ctx != SerializationContext.UseCase.Storage) {
-                assertThat(throwable).hasMessage(CordaClosureBlacklistSerializer.INSTANCE.getERROR_MESSAGE());
-            } else {
-                assertThat(throwable).hasMessageContaining("RPC not allowed to deserialise internal classes");
-            }
+            assertThat(throwable)
+                    .isInstanceOf(NotSerializableException.class)
+                    .hasMessageContaining(getClass().getName());
         });
     }
 
@@ -54,21 +51,17 @@ public final class ForbiddenLambdaSerializationTests {
     @SuppressWarnings("unchecked")
     public final void serialization_fails_for_not_serializable_java_lambdas() {
         contexts.forEach(ctx -> {
-            SerializationContext context = new SerializationContextImpl(KryoSerializationSchemeKt.getKryoMagic(),
+            SerializationContext context = new SerializationContextImpl(SchemaKt.getAmqpMagic(),
                     this.getClass().getClassLoader(), AllWhitelist.INSTANCE, Maps.newHashMap(), true, ctx, null);
             String value = "Hey";
             Callable<String> target = () -> value;
 
             Throwable throwable = catchThrowable(() -> serialize(target, context));
 
-            assertThat(throwable).isNotNull();
-            assertThat(throwable).isInstanceOf(IllegalArgumentException.class);
-            assertThat(throwable).isInstanceOf(IllegalArgumentException.class);
-            if (ctx != SerializationContext.UseCase.RPCServer && ctx != SerializationContext.UseCase.Storage) {
-                assertThat(throwable).hasMessage(CordaClosureBlacklistSerializer.INSTANCE.getERROR_MESSAGE());
-            } else {
-                assertThat(throwable).hasMessageContaining("RPC not allowed to deserialise internal classes");
-            }
+            assertThat(throwable)
+                    .isNotNull()
+                    .isInstanceOf(NotSerializableException.class)
+                    .hasMessageContaining(getClass().getName());
         });
     }
 

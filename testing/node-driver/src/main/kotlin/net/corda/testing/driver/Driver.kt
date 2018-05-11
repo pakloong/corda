@@ -2,7 +2,6 @@
 
 package net.corda.testing.driver
 
-import net.corda.core.CordaInternal
 import net.corda.core.DoNotImplement
 import net.corda.core.concurrent.CordaFuture
 import net.corda.core.flows.FlowLogic
@@ -25,8 +24,6 @@ import net.corda.testing.node.internal.genericDriver
 import net.corda.testing.node.internal.getTimestampAsDirectoryName
 import net.corda.testing.node.internal.newContext
 import rx.Observable
-import java.net.InetSocketAddress
-import java.net.ServerSocket
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
