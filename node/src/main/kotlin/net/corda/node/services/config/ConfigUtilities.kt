@@ -34,11 +34,13 @@ object ConfigHelper {
         val appConfig = ConfigFactory.parseFile(configFile.toFile(), parseOptions.setAllowMissing(allowMissingConfig))
 
         val systemOverrides = ConfigFactory.systemProperties().cordaEntriesOnly()
-        val finalConfig = systemOverrides
-                .withFallback(configOf(
+        val environmentOverrides = ConfigFactory.systemEnvironment().cordaEntriesOnly()
+        val finalConfig = configOf(
                 // Add substitution values here
-                "baseDirectory" to baseDirectory.toString()))
+                "baseDirectory" to baseDirectory.toString())
                 .withFallback(configOverrides)
+                .withFallback(systemOverrides)
+                .withFallback(environmentOverrides)
                 .withFallback(appConfig)
                 .withFallback(defaultConfig)
                 .resolve()
